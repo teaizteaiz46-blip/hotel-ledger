@@ -3,6 +3,7 @@
   --ground:#eef1ee; --surface:#ffffff; --surface-2:#f6f8f6; --ink:#15302b; --ink-2:#56706a; --line:#d5ddd9;
   --brass:#a8741a; --brass-soft:#f4e7cc; --free:#1d7a52; --free-soft:#dcefe5; --busy:#b33a2e; --busy-soft:#f6dedb;
   --shadow:0 1px 2px rgba(21,48,43,.06),0 6px 18px rgba(21,48,43,.06);
+  --profit-neg:#ffb4aa;
   --r:10px;
 }
 @media (prefers-color-scheme: dark){
@@ -11,6 +12,7 @@
     --ground:#0f1a18; --surface:#16241f; --surface-2:#1c2d28; --ink:#e4ece8; --ink-2:#98ada6; --line:#2a3d37;
     --brass:#d9a54a; --brass-soft:#3a2f1a; --free:#4fc08a; --free-soft:#173528; --busy:#ef7a6d; --busy-soft:#3d1f1c;
     --shadow:0 1px 2px rgba(0,0,0,.3);
+    --profit-neg:#b33a2e;
   }
 }
 *{box-sizing:border-box}
@@ -46,7 +48,7 @@ input:focus-visible,select:focus-visible,button:focus-visible{outline:2px solid 
 .stat .val small{font-size:.75rem;font-weight:400;color:var(--ink-2);margin-inline-start:4px}
 .stat.profit{background:var(--ink);color:var(--ground);border-color:var(--ink)}
 .stat.profit .lbl,.stat.profit .val small{color:inherit;opacity:.75}
-.stat.profit .val.neg{color:#ffb4aa}
+.stat.profit .val.neg{color:var(--profit-neg)}
 
 /* tabs */
 .tabs{display:flex;gap:4px;border-bottom:1px solid var(--line);margin-bottom:18px;overflow-x:auto;overflow-y:hidden;scrollbar-width:none}

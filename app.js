@@ -15,7 +15,7 @@ const nights = (a, b) => Math.max(0, Math.round((toDate(b) - toDate(a)) / dayMs)
 const addDays = (s, n) => iso(new Date(toDate(s).getTime() + n * dayMs));
 
 $("#month").value = today.slice(0, 7);
-$("#todayLbl").textContent = "· " + today;
+$("#todayLbl").innerHTML = "· <bdi dir=\"ltr\">" + today + "</bdi>";
 
 function show(view){
   $("#loading").hidden = true;
@@ -158,10 +158,10 @@ function render(){
 
   $("#stats").innerHTML = `
     <div class="stat"><div class="lbl">المحجوزة اليوم</div><div class="val num">${busyNow}<small>من ${store.rooms.length} غرفة</small></div></div>
-    <div class="stat"><div class="lbl">نسبة الإشغال بالشهر</div><div class="val num">${occ}%<small>${roomNights} ليلة</small></div></div>
-    <div class="stat"><div class="lbl">دخل الشهر</div><div class="val num">${fmt(revenue)}<small>${CUR}</small></div></div>
-    <div class="stat"><div class="lbl">مصاريف الشهر</div><div class="val num">${fmt(spent)}<small>${CUR}</small></div></div>
-    <div class="stat profit"><div class="lbl">صافي الربح</div><div class="val num ${profit < 0 ? "neg" : ""}">${fmt(profit)}<small>${CUR}</small></div></div>`;
+    <div class="stat"><div class="lbl">نسبة الإشغال بالشهر</div><div class="val num"><bdi>${occ}%</bdi><small><bdi>${roomNights}</bdi> ليلة</small></div></div>
+    <div class="stat"><div class="lbl">دخل الشهر</div><div class="val num"><bdi>${fmt(revenue)}</bdi><small>${CUR}</small></div></div>
+    <div class="stat"><div class="lbl">مصاريف الشهر</div><div class="val num"><bdi>${fmt(spent)}</bdi><small>${CUR}</small></div></div>
+    <div class="stat profit"><div class="lbl">صافي الربح</div><div class="val num ${profit < 0 ? "neg" : ""}"><bdi dir="ltr">${fmt(profit)}</bdi><small>${CUR}</small></div></div>`;
 
   const rooms = sortedRooms();
   $("#rooms").innerHTML = rooms.length ? rooms.map(r => {
@@ -171,7 +171,7 @@ function render(){
       <div class="no num">${esc(r.number)}</div>
       <div class="type">${esc(r.type || "غرفة")}</div>
       <div class="price num">${fmt(r.price)} <small>${CUR} / الليلة</small></div>
-      ${b ? `<span class="pill busy">محجوزة</span><div class="guest">${esc(b.guest)} · لغاية ${b.check_out}</div>`
+      ${b ? `<span class="pill busy">محجوزة</span><div class="guest">${esc(b.guest)} · لغاية <bdi dir="ltr">${b.check_out}</bdi></div>`
           : `<span class="pill free">فارغة</span><div class="guest">اضغط للحجز</div>`}
       <div class="acts"><button class="btn sm" data-editroom="${r.id}">تعديل</button></div>
     </div>`;
@@ -186,7 +186,7 @@ function render(){
       <td class="head" data-label="الغرفة"><span class="tag">غرفة ${esc(r ? r.number : "—")}</span></td>
       <td class="head" data-label="النزيل"><b>${esc(b.guest)}</b>${b.notes ? `<div class="sub">${esc(b.notes)}</div>` : ""}</td>
       <td class="num" data-label="الهاتف">${esc(b.phone || "—")}</td><td class="num" data-label="الهوية">${esc(b.id_number || "—")}</td>
-      <td class="num" data-label="من">${b.check_in}</td><td class="num" data-label="إلى">${b.check_out}</td><td class="num" data-label="الليالي">${n}</td>
+      <td class="num" data-label="من"><bdi dir="ltr">${b.check_in}</bdi></td><td class="num" data-label="إلى"><bdi dir="ltr">${b.check_out}</bdi></td><td class="num" data-label="الليالي">${n}</td>
       <td class="money" data-label="سعر الليلة">${fmt(b.price)}</td><td class="money" data-label="المجموع">${fmt(total)}</td>
       <td class="money" data-label="المدفوع">${fmt(b.paid)}${owe > 0 ? `<div class="owe">باقي ${fmt(owe)}</div>` : ""}</td>
       <td class="acts"><button class="btn sm" data-editbooking="${b.id}">تعديل</button> <button class="btn sm danger" data-del="hotel_bookings:${b.id}">حذف</button></td>
@@ -194,7 +194,7 @@ function render(){
   }).join("") : `<tr><td colspan="11" class="empty">${store.found ? "ما لگينا نزيل بهذا البحث." : "ما كو حجوزات بهذا الشهر."}</td></tr>`;
 
   $("#expenses").innerHTML = store.expenses.length ? store.expenses.map(e => `<tr>
-      <td class="num" data-label="التاريخ">${e.date}</td><td class="head" data-label="النوع"><span class="tag">${esc(e.type)}</span></td>
+      <td class="num" data-label="التاريخ"><bdi dir="ltr">${e.date}</bdi></td><td class="head" data-label="النوع"><span class="tag">${esc(e.type)}</span></td>
       <td class="money" data-label="المبلغ">${fmt(e.amount)} ${CUR}</td><td data-label="ملاحظة">${esc(e.note || "—")}</td>
       <td class="acts"><button class="btn sm" data-editexpense="${e.id}">تعديل</button> <button class="btn sm danger" data-del="hotel_expenses:${e.id}">حذف</button></td>
     </tr>`).join("") : `<tr><td colspan="5" class="empty">ما كو مصاريف مسجلة بهذا الشهر.</td></tr>`;
