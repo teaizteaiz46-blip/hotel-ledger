@@ -114,3 +114,51 @@ td.money{font-variant-numeric:tabular-nums;white-space:nowrap}
 .mfoot{display:flex;gap:8px;margin-top:4px}
 .toast{position:fixed;bottom:calc(20px + env(safe-area-inset-bottom,0px));left:50%;transform:translateX(-50%);background:var(--ink);color:var(--ground);padding:8px 16px;border-radius:8px;font-size:.88rem;z-index:20}
 @media (max-width:420px){.fields{grid-template-columns:1fr}}
+td.acts{white-space:nowrap}
+
+/* ---------- phone ---------- */
+@media (max-width:640px){
+  body{font-size:15px}
+  .wrap{padding:16px 12px 48px}
+  /* 16px inputs stop iOS Safari from zooming in on focus */
+  input,select{font-size:16px}
+  header.top h1{font-size:1.4rem}
+  .monthpick{width:100%}
+  .monthpick input{flex:1}
+
+  .stats{grid-template-columns:1fr 1fr;gap:8px;margin-bottom:18px}
+  .stat{padding:10px 12px}
+  .stat .val{font-size:1.2rem}
+  .stat.profit{grid-column:1/-1}
+
+  .tab{padding:10px 12px;font-size:.9rem;flex:1}
+  .bar h2{font-size:1rem}
+  .btns{width:100%}
+  .btns .btn{flex:1}
+  .search{width:100%}
+
+  .rooms{grid-template-columns:1fr 1fr;gap:10px}
+  .room{padding:12px}
+  .room .no{font-size:1.6rem}
+  .room .price{font-size:.9rem}
+  .room .acts .btn{width:100%}
+
+  /* tables become a stack of cards */
+  .tablebox{background:none;border:0;overflow:visible}
+  table{min-width:0}
+  thead{display:none}
+  table,tbody,tr,td{display:block;width:100%}
+  tr{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:10px 12px;margin-bottom:10px;display:grid;grid-template-columns:1fr 1fr;gap:4px 12px}
+  td{border:0;padding:2px 0;display:flex;flex-direction:column;font-size:.88rem}
+  td::before{content:attr(data-label);font-size:.72rem;color:var(--ink-2)}
+  td.head::before,td.acts::before,td.empty::before{content:none}
+  td.head{font-size:.95rem}
+  td.acts{grid-column:1/-1;flex-direction:row;gap:8px;padding-top:8px;margin-top:4px;border-top:1px solid var(--line)}
+  td.acts .btn{flex:1}
+  td.empty{grid-column:1/-1}
+  tr:has(td.empty){display:block}
+
+  .overlay{padding:12px}
+  .modal{padding:16px}
+  .mfoot .btn{flex:1}
+}

@@ -183,20 +183,20 @@ function render(){
     const r = roomOf(b.room_id); const n = nights(b.check_in, b.check_out); const total = n * (+b.price || 0);
     const owe = total - (+b.paid || 0);
     return `<tr>
-      <td><span class="tag">${esc(r ? r.number : "—")}</span></td>
-      <td>${esc(b.guest)}${b.notes ? `<div class="sub">${esc(b.notes)}</div>` : ""}</td>
-      <td class="num">${esc(b.phone || "—")}</td><td class="num">${esc(b.id_number || "—")}</td>
-      <td class="num">${b.check_in}</td><td class="num">${b.check_out}</td><td class="num">${n}</td>
-      <td class="money">${fmt(b.price)}</td><td class="money">${fmt(total)}</td>
-      <td class="money">${fmt(b.paid)}${owe > 0 ? `<div class="owe">باقي ${fmt(owe)}</div>` : ""}</td>
-      <td style="white-space:nowrap"><button class="btn sm" data-editbooking="${b.id}">تعديل</button> <button class="btn sm danger" data-del="hotel_bookings:${b.id}">حذف</button></td>
+      <td class="head" data-label="الغرفة"><span class="tag">غرفة ${esc(r ? r.number : "—")}</span></td>
+      <td class="head" data-label="النزيل"><b>${esc(b.guest)}</b>${b.notes ? `<div class="sub">${esc(b.notes)}</div>` : ""}</td>
+      <td class="num" data-label="الهاتف">${esc(b.phone || "—")}</td><td class="num" data-label="الهوية">${esc(b.id_number || "—")}</td>
+      <td class="num" data-label="من">${b.check_in}</td><td class="num" data-label="إلى">${b.check_out}</td><td class="num" data-label="الليالي">${n}</td>
+      <td class="money" data-label="سعر الليلة">${fmt(b.price)}</td><td class="money" data-label="المجموع">${fmt(total)}</td>
+      <td class="money" data-label="المدفوع">${fmt(b.paid)}${owe > 0 ? `<div class="owe">باقي ${fmt(owe)}</div>` : ""}</td>
+      <td class="acts"><button class="btn sm" data-editbooking="${b.id}">تعديل</button> <button class="btn sm danger" data-del="hotel_bookings:${b.id}">حذف</button></td>
     </tr>`;
   }).join("") : `<tr><td colspan="11" class="empty">${store.found ? "ما لگينا نزيل بهذا البحث." : "ما كو حجوزات بهذا الشهر."}</td></tr>`;
 
   $("#expenses").innerHTML = store.expenses.length ? store.expenses.map(e => `<tr>
-      <td class="num">${e.date}</td><td><span class="tag">${esc(e.type)}</span></td>
-      <td class="money">${fmt(e.amount)} ${CUR}</td><td>${esc(e.note || "")}</td>
-      <td style="white-space:nowrap"><button class="btn sm" data-editexpense="${e.id}">تعديل</button> <button class="btn sm danger" data-del="hotel_expenses:${e.id}">حذف</button></td>
+      <td class="num" data-label="التاريخ">${e.date}</td><td class="head" data-label="النوع"><span class="tag">${esc(e.type)}</span></td>
+      <td class="money" data-label="المبلغ">${fmt(e.amount)} ${CUR}</td><td data-label="ملاحظة">${esc(e.note || "—")}</td>
+      <td class="acts"><button class="btn sm" data-editexpense="${e.id}">تعديل</button> <button class="btn sm danger" data-del="hotel_expenses:${e.id}">حذف</button></td>
     </tr>`).join("") : `<tr><td colspan="5" class="empty">ما كو مصاريف مسجلة بهذا الشهر.</td></tr>`;
 
   const byType = {};
