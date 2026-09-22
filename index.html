@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>دفتر الفندق</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Readex+Pro:wght@400;500;700&family=Noto+Kufi+Arabic:wght@600;800&display=swap">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- login -->
+<section id="authView" class="auth" hidden>
+  <div class="authcard">
+    <h1 class="kufi">دفتر <span>الفندق</span></h1>
+    <p class="sub" id="authHint">سجّل دخولك حتى تفتح الدفتر.</p>
+    <form id="authForm" class="fields one">
+      <label>البريد الإلكتروني<input id="aEmail" type="email" autocomplete="email" required></label>
+      <label>كلمة السر<input id="aPass" type="password" autocomplete="current-password" minlength="6" required></label>
+      <div class="warn" id="authErr" hidden></div>
+      <button class="btn primary" id="authBtn">تسجيل الدخول</button>
+    </form>
+    <button class="linkbtn" id="authToggle">ما عندك حساب؟ أنشئ حساب</button>
+  </div>
+</section>
+
+<!-- signed in but not allowed -->
+<section id="deniedView" class="auth" hidden>
+  <div class="authcard">
+    <h1 class="kufi">بانتظار <span>الموافقة</span></h1>
+    <p>حسابك <b id="deniedEmail"></b> مسجّل، بس بعده ما مضاف لموظفين الفندق.</p>
+    <p class="sub">خلي صاحب الفندق يضيفك. يحتاج هذا الرقم:</p>
+    <code id="deniedId" class="uid"></code>
+    <button class="btn" data-logout>تسجيل الخروج</button>
+  </div>
+</section>
+
+<!-- app -->
+<div class="wrap" id="appView" hidden>
+  <header class="top">
+    <div>
+      <h1 class="kufi">دفتر <span>الفندق</span></h1>
+      <div class="sub"><span id="who"></span> · <button class="linkbtn" data-logout>تسجيل الخروج</button></div>
+    </div>
+    <label class="monthpick sub">الشهر
+      <input type="month" id="month">
+    </label>
+  </header>
+
+  <section class="stats" id="stats"></section>
+
+  <nav class="tabs" role="tablist">
+    <button class="tab" role="tab" data-tab="rooms" aria-selected="true">الغرف</button>
+    <button class="tab" role="tab" data-tab="bookings" aria-selected="false">الحجوزات والنزلاء</button>
+    <button class="tab" role="tab" data-tab="expenses" aria-selected="false">المصاريف</button>
+  </nav>
+
+  <section id="pane-rooms">
+    <div class="bar"><h2>الغرف اليوم <span class="sub" id="todayLbl"></span></h2>
+      <div class="btns"><button class="btn" id="addRoom">+ غرفة جديدة</button><button class="btn primary" id="addBooking">+ حجز جديد</button></div></div>
+    <div class="rooms" id="rooms"></div>
+  </section>
+
+  <section id="pane-bookings" hidden>
+    <div class="bar"><h2 id="bTitle">حجوزات الشهر</h2>
+      <div class="btns"><input id="search" type="search" placeholder="ابحث عن نزيل بالاسم أو الهاتف أو الهوية" class="search"><button class="btn primary" id="addBooking2">+ حجز جديد</button></div></div>
+    <div class="tablebox"><table><thead><tr><th>الغرفة</th><th>النزيل</th><th>الهاتف</th><th>الهوية</th><th>من</th><th>إلى</th><th>الليالي</th><th>سعر الليلة</th><th>المجموع</th><th>المدفوع</th><th></th></tr></thead><tbody id="bookings"></tbody></table></div>
+  </section>
+
+  <section id="pane-expenses" hidden>
+    <div class="bar"><h2>مصاريف الشهر</h2><button class="btn primary" id="addExpense">+ مصروف جديد</button></div>
+    <div class="split">
+      <div class="tablebox"><table><thead><tr><th>التاريخ</th><th>النوع</th><th>المبلغ</th><th>ملاحظة</th><th></th></tr></thead><tbody id="expenses"></tbody></table></div>
+      <div class="card"><h3>حسب النوع</h3><div class="brk" id="breakdown"></div></div>
+    </div>
+  </section>
+</div>
+
+<div class="loading" id="loading">جارِ التحميل…</div>
+<div class="overlay" id="overlay" hidden><div class="modal" id="modal"></div></div>
+<div class="toast" id="toast" hidden></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script src="config.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
