@@ -49,7 +49,7 @@ input:focus-visible,select:focus-visible,button:focus-visible{outline:2px solid 
 .stat.profit .val.neg{color:#ffb4aa}
 
 /* tabs */
-.tabs{display:flex;gap:4px;border-bottom:1px solid var(--line);margin-bottom:18px;overflow-x:auto}
+.tabs{display:flex;gap:4px;border-bottom:1px solid var(--line);margin-bottom:18px;overflow-x:auto;overflow-y:hidden;scrollbar-width:none}
 .tab{background:none;border:0;padding:10px 16px;cursor:pointer;color:var(--ink-2);border-bottom:3px solid transparent;margin-bottom:-1px;white-space:nowrap;font-weight:500}
 .tab[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--brass)}
 .bar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;margin-bottom:14px}
