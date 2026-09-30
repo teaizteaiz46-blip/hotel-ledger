@@ -260,7 +260,7 @@ function roomForm(r = {}){
   <form id="f" class="fields">
     <label>رقم الغرفة<input id="rNumber" required value="${esc(r.number || "")}"></label>
     <label>النوع<input id="rType" placeholder="مفردة، مزدوجة، جناح…" value="${esc(r.type || "")}"></label>
-    <label class="full">سعر الليلة (${CUR})<input id="rPrice" type="number" min="0" step="1000" required value="${r.price ?? ""}"></label>
+    <label class="full">سعر الليلة (${CUR})<input id="rPrice" type="number" min="0" step="any" inputmode="decimal" required value="${r.price ?? ""}"></label>
     <div class="mfoot full"><button class="btn primary">حفظ</button><button type="button" class="btn" data-close>إلغاء</button>
     ${r.id ? `<button type="button" class="btn danger" data-del="hotel_rooms:${r.id}" style="margin-inline-start:auto">حذف الغرفة</button>` : ""}</div>
   </form>`);
@@ -278,11 +278,11 @@ function bookingForm(b = {}){
   openModal(`<h2>${b.id ? "تعديل حجز" : "حجز جديد"}</h2>
   <form id="f" class="fields">
     <label>الغرفة<select id="bRoom">${rooms.map(r => `<option value="${r.id}" ${r.id === roomId ? "selected" : ""}>${esc(r.number)} — ${esc(r.type || "غرفة")}</option>`).join("")}</select></label>
-    <label>سعر الليلة (${CUR})<input id="bPrice" type="number" min="0" step="1000" required value="${b.price ?? (roomOf(roomId)?.price ?? "")}"></label>
+    <label>سعر الليلة (${CUR})<input id="bPrice" type="number" min="0" step="any" inputmode="decimal" required value="${b.price ?? (roomOf(roomId)?.price ?? "")}"></label>
     <label>اسم النزيل<input id="bGuest" required value="${esc(b.guest || "")}"></label>
     <label>الهاتف<input id="bPhone" inputmode="tel" value="${esc(b.phone || "")}"></label>
     <label>رقم الهوية<input id="bIdNo" value="${esc(b.id_number || "")}"></label>
-    <label>المبلغ المدفوع (${CUR})<input id="bPaid" type="number" min="0" step="1000" value="${b.paid ?? ""}"></label>
+    <label>المبلغ المدفوع (${CUR})<input id="bPaid" type="number" min="0" step="any" inputmode="decimal" value="${b.paid ?? ""}"></label>
     <label>من (دخول)<input id="bIn" type="date" required value="${checkIn}"></label>
     <label>إلى (خروج)<input id="bOut" type="date" required value="${b.check_out || addDays(checkIn, 1)}"></label>
     <label class="full">ملاحظات<input id="bNotes" value="${esc(b.notes || "")}"></label>
@@ -328,7 +328,7 @@ function expenseForm(x = {}){
   <form id="f" class="fields">
     <label>النوع<select id="eType">${EXP_TYPES.map(t => `<option ${t === (x.type || "كهرباء") ? "selected" : ""}>${t}</option>`).join("")}</select></label>
     <label>التاريخ<input id="eDate" type="date" required value="${d}"></label>
-    <label class="full">المبلغ (${CUR})<input id="eAmount" type="number" min="0" step="1000" required value="${x.amount ?? ""}"></label>
+    <label class="full">المبلغ (${CUR})<input id="eAmount" type="number" min="0" step="any" inputmode="decimal" required value="${x.amount ?? ""}"></label>
     <label class="full">ملاحظة<input id="eNote" value="${esc(x.note || "")}"></label>
     <div class="mfoot full"><button class="btn primary">حفظ</button><button type="button" class="btn" data-close>إلغاء</button></div>
   </form>`);
