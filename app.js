@@ -186,7 +186,7 @@ function render(){
     <div class="stat got"><div class="lbl">الواصل</div><div class="val num"><bdi>${fmt(paid)}</bdi><small>${CUR}</small></div><div class="hint">مبالغ مستلمة</div></div>
     <div class="stat due"><div class="lbl">غير الواصل</div><div class="val num"><bdi>${fmt(unpaid)}</bdi><small>${CUR}</small></div><div class="hint"><bdi>${owing}</bdi> نزيل باقي عليه</div></div>
     <div class="stat"><div class="lbl">المصاريف</div><div class="val num"><bdi>${fmt(spent)}</bdi><small>${CUR}</small></div><div class="hint">&nbsp;</div></div>
-    <div class="stat profit"><div class="lbl">صافي الربح (الواصل − المصاريف)</div><div class="val num ${profit < 0 ? "neg" : ""}"><bdi dir="ltr">${fmt(profit)}</bdi><small>${CUR}</small></div><div class="hint">إذا وصل الباقي: <bdi dir="ltr">${fmt(billed - spent)}</bdi></div></div>`;
+    <div class="stat profit"><div class="lbl">صافي الربح</div><div class="val num ${profit < 0 ? "neg" : ""}"><bdi dir="ltr">${fmt(profit)}</bdi><small>${CUR}</small></div><div class="hint">الواصل − المصاريف · إذا وصل الباقي: <bdi dir="ltr">${fmt(billed - spent)}</bdi></div></div>`;
 
   const rooms = sortedRooms();
   $("#rooms").innerHTML = rooms.length ? rooms.map(r => {

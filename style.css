@@ -41,7 +41,7 @@ input:focus-visible,select:focus-visible,button:focus-visible{outline:2px solid 
 .loading{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;color:var(--ink-2)}
 
 /* summary */
-.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin-bottom:26px}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:26px}
 .stat{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px 16px}
 .stat .lbl{font-size:.8rem;color:var(--ink-2)}
 .stat .val{font-size:1.45rem;font-weight:700;margin-top:2px}
