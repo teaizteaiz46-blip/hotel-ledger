@@ -164,3 +164,29 @@ td.acts{white-space:nowrap}
   .modal{padding:16px}
   .mfoot .btn{flex:1}
 }
+
+/* ---------- period picker ---------- */
+.period{display:flex;flex-direction:column;gap:8px;align-items:flex-end}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;background:var(--surface)}
+.seg button{background:none;border:0;padding:6px 14px;cursor:pointer;color:var(--ink-2);font-size:.88rem}
+.seg button + button{border-inline-start:1px solid var(--line)}
+.seg button.on{background:var(--brass);color:#fff;font-weight:500}
+.pickers{display:flex;align-items:center;gap:8px}
+.pickers input{width:auto}
+
+.stat .hint{font-size:.75rem;color:var(--ink-2);margin-top:2px}
+.stat.profit .hint{color:inherit;opacity:.75}
+.stat.got .val{color:var(--free)}
+.stat.due .val{color:var(--busy)}
+
+@media (min-width:641px){
+  .bar .btns{flex-wrap:nowrap}
+  .search{width:300px}
+}
+@media (max-width:640px){
+  .period{width:100%;align-items:stretch}
+  .seg{display:flex}
+  .seg button{flex:1}
+  .pickers input{flex:1;min-width:0}
+  .stat:first-child{grid-column:1/-1}
+}

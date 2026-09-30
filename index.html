@@ -6,7 +6,7 @@
 <title>دفتر الفندق</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Readex+Pro:wght@400;500;700&family=Noto+Kufi+Arabic:wght@600;800&display=swap">
-<link rel="stylesheet" href="style.css?v=4">
+<link rel="stylesheet" href="style.css?v=5">
 </head>
 <body>
 
@@ -43,9 +43,18 @@
       <h1 class="kufi">دفتر <span>الفندق</span></h1>
       <div class="sub"><span id="who"></span> · <button class="linkbtn" data-logout>تسجيل الخروج</button></div>
     </div>
-    <label class="monthpick sub">الشهر
-      <input type="month" id="month">
-    </label>
+    <div class="period">
+      <div class="seg" id="mode" role="group" aria-label="الفترة">
+        <button data-mode="day">يومي</button><button data-mode="month" class="on">شهري</button><button data-mode="range">من – إلى</button>
+      </div>
+      <div class="pickers">
+        <input type="date" id="day" aria-label="اليوم" hidden>
+        <input type="month" id="month" aria-label="الشهر">
+        <input type="date" id="from" aria-label="من" hidden>
+        <span class="sub" id="toLbl" hidden>إلى</span>
+        <input type="date" id="to" aria-label="إلى" hidden>
+      </div>
+    </div>
   </header>
 
   <section class="stats" id="stats"></section>
@@ -63,13 +72,13 @@
   </section>
 
   <section id="pane-bookings" hidden>
-    <div class="bar"><h2 id="bTitle">حجوزات الشهر</h2>
+    <div class="bar"><h2 id="bTitle">الحجوزات</h2>
       <div class="btns"><input id="search" type="search" placeholder="ابحث عن نزيل بالاسم أو الهاتف أو الهوية" class="search"><button class="btn primary" id="addBooking2">+ حجز جديد</button></div></div>
     <div class="tablebox"><table><thead><tr><th>الغرفة</th><th>النزيل</th><th>الهاتف</th><th>الهوية</th><th>من</th><th>إلى</th><th>الليالي</th><th>سعر الليلة</th><th>المجموع</th><th>المدفوع</th><th></th></tr></thead><tbody id="bookings"></tbody></table></div>
   </section>
 
   <section id="pane-expenses" hidden>
-    <div class="bar"><h2>مصاريف الشهر</h2><button class="btn primary" id="addExpense">+ مصروف جديد</button></div>
+    <div class="bar"><h2>المصاريف</h2><button class="btn primary" id="addExpense">+ مصروف جديد</button></div>
     <div class="split">
       <div class="tablebox"><table><thead><tr><th>التاريخ</th><th>النوع</th><th>المبلغ</th><th>ملاحظة</th><th></th></tr></thead><tbody id="expenses"></tbody></table></div>
       <div class="card"><h3>حسب النوع</h3><div class="brk" id="breakdown"></div></div>
@@ -82,7 +91,7 @@
 <div class="toast" id="toast" hidden></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-<script src="config.js?v=4"></script>
-<script src="app.js?v=4"></script>
+<script src="config.js?v=5"></script>
+<script src="app.js?v=5"></script>
 </body>
 </html>

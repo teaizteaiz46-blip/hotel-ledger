@@ -84,16 +84,36 @@ sb.auth.onAuthStateChange((_event, session) => {
 });
 
 /* ---------- data ---------- */
-function monthRange(){
-  const m = $("#month").value || today.slice(0, 7);
-  const [y, mo] = m.split("-").map(Number);
-  const start = m + "-01";
-  const end = iso(new Date(y, mo, 1));
+// The chosen period as [start, end) — a single day, a month, or a from–to range.
+let mode = "month";
+$("#day").value = $("#from").value = $("#to").value = today;
+function period(){
+  let start, end;
+  if (mode === "day") {
+    start = $("#day").value || today; end = addDays(start, 1);
+  } else if (mode === "range") {
+    let a = $("#from").value || today, b = $("#to").value || a;
+    if (b < a) [a, b] = [b, a];
+    start = a; end = addDays(b, 1);
+  } else {
+    const m = $("#month").value || today.slice(0, 7);
+    const [y, mo] = m.split("-").map(Number);
+    start = m + "-01"; end = iso(new Date(y, mo, 1));
+  }
   return { start, end, days: nights(start, end) };
 }
+document.querySelectorAll("#mode button").forEach(btn => btn.onclick = () => {
+  mode = btn.dataset.mode;
+  document.querySelectorAll("#mode button").forEach(x => x.classList.toggle("on", x === btn));
+  $("#day").hidden = mode !== "day";
+  $("#month").hidden = mode !== "month";
+  $("#from").hidden = $("#to").hidden = $("#toLbl").hidden = mode !== "range";
+  loadAll();
+});
+["#day", "#month", "#from", "#to"].forEach(s => $(s).onchange = loadAll);
 
 async function loadAll(){
-  const { start, end } = monthRange();
+  const { start, end } = period();
   // bookings that touch the chosen month or today (for the room status cards)
   const rStart = start < today ? start : today;
   const tomorrow = addDays(today, 1);
@@ -147,21 +167,26 @@ const sortedRooms = () => [...store.rooms].sort((a,b) => String(a.number).locale
 
 /* ---------- render ---------- */
 function render(){
-  const { start, end, days } = monthRange();
-  const monthBookings = store.bookings.filter(b => nightsIn(b, start, end) > 0);
-  let revenue = 0, roomNights = 0;
-  for (const b of monthBookings) { const n = nightsIn(b, start, end); revenue += n * (+b.price || 0); roomNights += n; }
+  const { start, end, days } = period();
+  // A booking counts, with its full amount, in the period its check-in date falls in.
+  const monthBookings = store.bookings.filter(b => b.check_in >= start && b.check_in < end);
+  let billed = 0, paid = 0, roomNights = 0;
+  for (const b of monthBookings) { billed += nights(b.check_in, b.check_out) * (+b.price || 0); paid += +b.paid || 0; }
+  for (const b of store.bookings) roomNights += nightsIn(b, start, end);
+  const unpaid = Math.max(0, billed - paid);
+  const owing = monthBookings.filter(b => nights(b.check_in, b.check_out) * (+b.price || 0) > (+b.paid || 0)).length;
   const spent = store.expenses.reduce((s,e) => s + (+e.amount || 0), 0);
-  const profit = revenue - spent;
+  const profit = paid - spent;
   const busyNow = store.rooms.filter(r => activeToday(r.id)).length;
   const occ = store.rooms.length ? Math.round(roomNights / (store.rooms.length * days) * 100) : 0;
 
   $("#stats").innerHTML = `
-    <div class="stat"><div class="lbl">المحجوزة اليوم</div><div class="val num">${busyNow}<small>من ${store.rooms.length} غرفة</small></div></div>
-    <div class="stat"><div class="lbl">نسبة الإشغال بالشهر</div><div class="val num"><bdi>${occ}%</bdi><small><bdi>${roomNights}</bdi> ليلة</small></div></div>
-    <div class="stat"><div class="lbl">دخل الشهر</div><div class="val num"><bdi>${fmt(revenue)}</bdi><small>${CUR}</small></div></div>
-    <div class="stat"><div class="lbl">مصاريف الشهر</div><div class="val num"><bdi>${fmt(spent)}</bdi><small>${CUR}</small></div></div>
-    <div class="stat profit"><div class="lbl">صافي الربح</div><div class="val num ${profit < 0 ? "neg" : ""}"><bdi dir="ltr">${fmt(profit)}</bdi><small>${CUR}</small></div></div>`;
+    <div class="stat"><div class="lbl">المحجوزة اليوم</div><div class="val num">${busyNow}<small>من ${store.rooms.length} غرفة</small></div><div class="hint">إشغال الفترة <bdi>${occ}%</bdi></div></div>
+    <div class="stat"><div class="lbl">مجموع الحجوزات</div><div class="val num"><bdi>${fmt(billed)}</bdi><small>${CUR}</small></div><div class="hint"><bdi>${monthBookings.length}</bdi> حجز</div></div>
+    <div class="stat got"><div class="lbl">الواصل</div><div class="val num"><bdi>${fmt(paid)}</bdi><small>${CUR}</small></div><div class="hint">مبالغ مستلمة</div></div>
+    <div class="stat due"><div class="lbl">غير الواصل</div><div class="val num"><bdi>${fmt(unpaid)}</bdi><small>${CUR}</small></div><div class="hint"><bdi>${owing}</bdi> نزيل باقي عليه</div></div>
+    <div class="stat"><div class="lbl">المصاريف</div><div class="val num"><bdi>${fmt(spent)}</bdi><small>${CUR}</small></div><div class="hint">&nbsp;</div></div>
+    <div class="stat profit"><div class="lbl">صافي الربح (الواصل − المصاريف)</div><div class="val num ${profit < 0 ? "neg" : ""}"><bdi dir="ltr">${fmt(profit)}</bdi><small>${CUR}</small></div><div class="hint">إذا وصل الباقي: <bdi dir="ltr">${fmt(billed - spent)}</bdi></div></div>`;
 
   const rooms = sortedRooms();
   $("#rooms").innerHTML = rooms.length ? rooms.map(r => {
@@ -178,7 +203,7 @@ function render(){
   }).join("") : `<div class="empty" style="grid-column:1/-1">ما كو غرف بعد. اضغط «غرفة جديدة» وضيف غرفك مع سعر الليلة.</div>`;
 
   const list = store.found ?? monthBookings;
-  $("#bTitle").textContent = store.found ? `نتائج البحث (${list.length})` : "حجوزات الشهر";
+  $("#bTitle").textContent = store.found ? `نتائج البحث (${list.length})` : "الحجوزات";
   $("#bookings").innerHTML = list.length ? list.map(b => {
     const r = roomOf(b.room_id); const n = nights(b.check_in, b.check_out); const total = n * (+b.price || 0);
     const owe = total - (+b.paid || 0);
@@ -191,13 +216,13 @@ function render(){
       <td class="money" data-label="المدفوع">${fmt(b.paid)}${owe > 0 ? `<div class="owe">باقي ${fmt(owe)}</div>` : ""}</td>
       <td class="acts"><button class="btn sm" data-editbooking="${b.id}">تعديل</button> <button class="btn sm danger" data-del="hotel_bookings:${b.id}">حذف</button></td>
     </tr>`;
-  }).join("") : `<tr><td colspan="11" class="empty">${store.found ? "ما لگينا نزيل بهذا البحث." : "ما كو حجوزات بهذا الشهر."}</td></tr>`;
+  }).join("") : `<tr><td colspan="11" class="empty">${store.found ? "ما لگينا نزيل بهذا البحث." : "ما كو حجوزات بهذي الفترة."}</td></tr>`;
 
   $("#expenses").innerHTML = store.expenses.length ? store.expenses.map(e => `<tr>
       <td class="num" data-label="التاريخ"><bdi dir="ltr">${e.date}</bdi></td><td class="head" data-label="النوع"><span class="tag">${esc(e.type)}</span></td>
       <td class="money" data-label="المبلغ">${fmt(e.amount)} ${CUR}</td><td data-label="ملاحظة">${esc(e.note || "—")}</td>
       <td class="acts"><button class="btn sm" data-editexpense="${e.id}">تعديل</button> <button class="btn sm danger" data-del="hotel_expenses:${e.id}">حذف</button></td>
-    </tr>`).join("") : `<tr><td colspan="5" class="empty">ما كو مصاريف مسجلة بهذا الشهر.</td></tr>`;
+    </tr>`).join("") : `<tr><td colspan="5" class="empty">ما كو مصاريف مسجلة بهذي الفترة.</td></tr>`;
 
   const byType = {};
   store.expenses.forEach(e => byType[e.type] = (byType[e.type] || 0) + (+e.amount || 0));
@@ -213,7 +238,7 @@ document.querySelectorAll(".tab").forEach(t => t.onclick = () => {
   document.querySelectorAll(".tab").forEach(x => x.setAttribute("aria-selected", x === t));
   ["rooms","bookings","expenses"].forEach(p => $("#pane-" + p).hidden = p !== t.dataset.tab);
 });
-$("#month").onchange = loadAll;
+
 
 /* ---------- modals ---------- */
 function openModal(html){ $("#modal").innerHTML = html; $("#overlay").hidden = false; const f = $("#modal input,#modal select"); f && f.focus(); }
@@ -297,7 +322,7 @@ function bookingForm(b = {}){
 }
 
 function expenseForm(x = {}){
-  const { start, end } = monthRange();
+  const { start, end } = period();
   const d = x.date || (today >= start && today < end ? today : start);
   openModal(`<h2>${x.id ? "تعديل مصروف" : "مصروف جديد"}</h2>
   <form id="f" class="fields">
