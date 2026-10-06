@@ -6,7 +6,7 @@
 <title>دفتر الفندق</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Readex+Pro:wght@400;500;700&family=Noto+Kufi+Arabic:wght@600;800&display=swap">
-<link rel="stylesheet" href="style.css?v=7">
+<link rel="stylesheet" href="style.css?v=8">
 </head>
 <body>
 
@@ -63,6 +63,7 @@
     <button class="tab" role="tab" data-tab="rooms" aria-selected="true">الغرف</button>
     <button class="tab" role="tab" data-tab="bookings" aria-selected="false">الحجوزات والنزلاء</button>
     <button class="tab" role="tab" data-tab="expenses" aria-selected="false">المصاريف</button>
+    <button class="tab" role="tab" data-tab="settings" aria-selected="false">الإعدادات</button>
   </nav>
 
   <section id="pane-rooms">
@@ -84,6 +85,17 @@
       <div class="card"><h3>حسب النوع</h3><div class="brk" id="breakdown"></div></div>
     </div>
   </section>
+  <section id="pane-settings" hidden>
+    <div class="bar"><h2>الإعدادات</h2></div>
+    <form id="settingsForm" class="card settings">
+      <label class="setrow">
+        <span><b>وقت الخروج (Check-out)</b><span class="sub">الغرفة تبقى محجوزة يوم الخروج لحد هالساعة، وبعدها تصير فارغة. تگدر تمدد لنزيل معين من كارت الغرفة.</span></span>
+        <input type="time" id="sOut" required>
+      </label>
+      <div class="sub" id="sNote"></div>
+      <div><button class="btn primary" id="sSave">حفظ</button></div>
+    </form>
+  </section>
 </div>
 
 <div class="loading" id="loading">جارِ التحميل…</div>
@@ -91,7 +103,7 @@
 <div class="toast" id="toast" hidden></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-<script src="config.js?v=7"></script>
-<script src="app.js?v=7"></script>
+<script src="config.js?v=8"></script>
+<script src="app.js?v=8"></script>
 </body>
 </html>

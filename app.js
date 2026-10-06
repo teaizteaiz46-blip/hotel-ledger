@@ -7,7 +7,7 @@ const $ = s => document.querySelector(s);
 const fmt = n => Math.round(n || 0).toLocaleString("en-US");
 const pad = n => String(n).padStart(2, "0");
 const iso = d => d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate());
-const today = iso(new Date());
+let today = iso(new Date());
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const dayMs = 86400000;
 const toDate = s => new Date(s + "T00:00:00");
@@ -71,6 +71,7 @@ async function onSession(session){
     $("#deniedId").textContent = currentUser.id;
     show("deniedView"); return;
   }
+  store.role = data.role;
   $("#who").textContent = currentUser.email + (data.role === "owner" ? " (المالك)" : "");
   show("appView");
   await loadAll();
@@ -118,13 +119,15 @@ async function loadAll(){
   const rStart = start < today ? start : today;
   const tomorrow = addDays(today, 1);
   const rEnd = end > tomorrow ? end : tomorrow;
-  const [rooms, bookings, expenses] = await Promise.all([
+  const [settings, rooms, bookings, expenses] = await Promise.all([
+    sb.from("hotel_settings").select("*").eq("id", 1).maybeSingle(),
     sb.from("hotel_rooms").select("*"),
-    sb.from("hotel_bookings").select("*").lt("check_in", rEnd).gt("check_out", rStart).order("check_in"),
+    sb.from("hotel_bookings").select("*").lt("check_in", rEnd).gte("check_out", rStart).order("check_in"),
     sb.from("hotel_expenses").select("*").gte("date", start).lt("date", end).order("date"),
   ]);
   const err = rooms.error || bookings.error || expenses.error;
   if (err) return fail(err, "ما گدرنا نحمّل البيانات");
+  if (settings.data) store.settings = settings.data;
   store.rooms = rooms.data; store.bookings = bookings.data; store.expenses = expenses.data;
   if ($("#search").value.trim()) await runSearch(); else render();
 }
@@ -162,7 +165,16 @@ function nightsIn(b, start, end){
   return a < z ? nights(a, z) : 0;
 }
 const roomOf = id => store.rooms.find(r => r.id === id);
-const activeToday = roomId => store.bookings.find(b => b.room_id === roomId && b.check_in <= today && today < b.check_out);
+const hm = t => (t || "").slice(0, 5);
+const nowHM = () => { const d = new Date(); return pad(d.getHours()) + ":" + pad(d.getMinutes()); };
+const defaultOut = () => hm(store.settings?.checkout_time) || "12:00";
+// the time this booking must leave on its check-out day: its own late check-out, else the hotel's
+const outTime = b => hm(b.checkout_time) || defaultOut();
+const bookingTotal = b => nights(b.check_in, b.check_out) * (+b.price || 0) + (+b.extra || 0);
+const addHours = (t, h) => { const [H, M] = t.split(":").map(Number); return pad(Math.min(23, H + h)) + ":" + pad(M); };
+// a room is busy until its guest's check-out time on the check-out day
+const activeToday = roomId => store.bookings.find(b => b.room_id === roomId && b.check_in <= today &&
+  (today < b.check_out || (today === b.check_out && nowHM() < outTime(b))));
 const sortedRooms = () => [...store.rooms].sort((a,b) => String(a.number).localeCompare(String(b.number), "en", {numeric:true}));
 
 /* ---------- render ---------- */
@@ -171,10 +183,10 @@ function render(){
   // A booking counts, with its full amount, in the period its check-in date falls in.
   const monthBookings = store.bookings.filter(b => b.check_in >= start && b.check_in < end);
   let billed = 0, paid = 0, roomNights = 0;
-  for (const b of monthBookings) { billed += nights(b.check_in, b.check_out) * (+b.price || 0); paid += +b.paid || 0; }
+  for (const b of monthBookings) { billed += bookingTotal(b); paid += +b.paid || 0; }
   for (const b of store.bookings) roomNights += nightsIn(b, start, end);
   const unpaid = Math.max(0, billed - paid);
-  const owing = monthBookings.filter(b => nights(b.check_in, b.check_out) * (+b.price || 0) > (+b.paid || 0)).length;
+  const owing = monthBookings.filter(b => bookingTotal(b) > (+b.paid || 0)).length;
   const spent = store.expenses.reduce((s,e) => s + (+e.amount || 0), 0);
   const profit = paid - spent;
   const busyNow = store.rooms.filter(r => activeToday(r.id)).length;
@@ -196,16 +208,17 @@ function render(){
       <div class="no num">${esc(r.number)}</div>
       <div class="type">${esc(r.type || "غرفة")}</div>
       <div class="price num">${fmt(r.price)} <small>${CUR} / الليلة</small></div>
-      ${b ? `<span class="pill busy">محجوزة</span><div class="guest">${esc(b.guest)} · لغاية <bdi dir="ltr">${b.check_out}</bdi></div>`
+      ${b ? `<span class="pill busy">${b.check_out === today ? "يطلع اليوم" : "محجوزة"}</span>
+             <div class="guest">${esc(b.guest)}<br>خروج ${b.check_out === today ? "اليوم" : `<bdi dir="ltr">${b.check_out}</bdi>`} الساعة <bdi dir="ltr">${outTime(b)}</bdi>${b.checkout_time ? ` <span class="ext">ممدد</span>` : ""}</div>`
           : `<span class="pill free">فارغة</span><div class="guest">اضغط للحجز</div>`}
-      <div class="acts"><button class="btn sm" data-editroom="${r.id}">تعديل</button></div>
+      <div class="acts"><button class="btn sm" data-editroom="${r.id}">تعديل</button>${b ? `<button class="btn sm" data-extend="${b.id}">تمديد الخروج</button>` : ""}</div>
     </div>`;
   }).join("") : `<div class="empty" style="grid-column:1/-1">ما كو غرف بعد. اضغط «غرفة جديدة» وضيف غرفك مع سعر الليلة.</div>`;
 
   const list = store.found ?? monthBookings;
   $("#bTitle").textContent = store.found ? `نتائج البحث (${list.length})` : "الحجوزات";
   $("#bookings").innerHTML = list.length ? list.map(b => {
-    const r = roomOf(b.room_id); const n = nights(b.check_in, b.check_out); const total = n * (+b.price || 0);
+    const r = roomOf(b.room_id); const n = nights(b.check_in, b.check_out); const total = bookingTotal(b);
     const owe = total - (+b.paid || 0);
     return `<tr>
       <td class="head" data-label="الغرفة"><span class="tag">غرفة ${esc(r ? r.number : "—")}</span></td>
@@ -231,12 +244,13 @@ function render(){
       <div class="row"><span>${esc(t)}</span><span class="num">${fmt(v)}</span></div>
       <div class="track"><div class="fill" style="width:${spent ? v/spent*100 : 0}%"></div></div></div>`).join("")
     : `<div class="sub">لا شيء بعد.</div>`;
+  renderSettings();
 }
 
 /* ---------- tabs ---------- */
 document.querySelectorAll(".tab").forEach(t => t.onclick = () => {
   document.querySelectorAll(".tab").forEach(x => x.setAttribute("aria-selected", x === t));
-  ["rooms","bookings","expenses"].forEach(p => $("#pane-" + p).hidden = p !== t.dataset.tab);
+  ["rooms","bookings","expenses","settings"].forEach(p => $("#pane-" + p).hidden = p !== t.dataset.tab);
 });
 
 
@@ -285,21 +299,23 @@ function bookingForm(b = {}){
     <label>المبلغ المدفوع (${CUR})<input id="bPaid" type="number" min="0" step="any" inputmode="decimal" value="${b.paid ?? ""}"></label>
     <label>من (دخول)<input id="bIn" type="date" required value="${checkIn}"></label>
     <label>إلى (خروج)<input id="bOut" type="date" required value="${b.check_out || addDays(checkIn, 1)}"></label>
+    <label>وقت الخروج<input id="bOutTime" type="time" value="${hm(b.checkout_time) || defaultOut()}"></label>
+    <label>مبلغ إضافي (تمديد…)<input id="bExtra" type="number" min="0" step="any" inputmode="decimal" value="${+b.extra || ""}"></label>
     <label class="full">ملاحظات<input id="bNotes" value="${esc(b.notes || "")}"></label>
     <div class="calc num" id="bCalc"></div>
     <div class="warn" id="bWarn" hidden></div>
     <div class="mfoot full"><button class="btn primary">حفظ الحجز</button><button type="button" class="btn" data-close>إلغاء</button></div>
   </form>`);
   const calc = () => {
-    const i = $("#bIn").value, o = $("#bOut").value, p = +$("#bPrice").value || 0, n = i && o ? nights(i, o) : 0;
-    $("#bCalc").textContent = `${n} ليلة × ${fmt(p)} = ${fmt(n * p)} ${CUR}`;
+    const i = $("#bIn").value, o = $("#bOut").value, p = +$("#bPrice").value || 0, x = +$("#bExtra").value || 0, n = i && o ? nights(i, o) : 0;
+    $("#bCalc").textContent = `${n} ليلة × ${fmt(p)}${x ? ` + ${fmt(x)} إضافي` : ""} = ${fmt(n * p + x)} ${CUR}`;
     $("#bWarn").hidden = n > 0;
     $("#bWarn").textContent = "تاريخ الخروج لازم يكون بعد الدخول.";
     return n;
   };
   $("#bRoom").onchange = () => { if (!b.id) $("#bPrice").value = roomOf($("#bRoom").value)?.price ?? ""; };
   $("#bIn").onchange = () => { if ($("#bOut").value <= $("#bIn").value) $("#bOut").value = addDays($("#bIn").value, 1); calc(); };
-  ["#bOut","#bPrice"].forEach(s => $(s).oninput = calc);
+  ["#bOut","#bPrice","#bExtra"].forEach(s => $(s).oninput = calc);
   calc();
   onSave(async () => {
     if (calc() <= 0) return;
@@ -316,7 +332,9 @@ function bookingForm(b = {}){
     }
     await write("hotel_bookings", { id: b.id, room_id, check_in, check_out,
       guest: $("#bGuest").value.trim(), phone: $("#bPhone").value.trim() || null, id_number: $("#bIdNo").value.trim() || null,
-      notes: $("#bNotes").value.trim() || null, price: +$("#bPrice").value, paid: +$("#bPaid").value || 0 });
+      notes: $("#bNotes").value.trim() || null, price: +$("#bPrice").value, paid: +$("#bPaid").value || 0, extra: +$("#bExtra").value || 0,
+      // only store a time that differs from the hotel's, so changing the setting later still applies
+      checkout_time: $("#bOutTime").value && $("#bOutTime").value !== defaultOut() ? $("#bOutTime").value : null });
     closeModal(); toast("انحفظ الحجز");
   });
 }
@@ -338,6 +356,48 @@ function expenseForm(x = {}){
   });
 }
 
+// late check-out for a guest: pick extra hours (or a time) and an optional extra charge
+function extendForm(b){
+  const cur = outTime(b);
+  openModal(`<h2>تمديد خروج ${esc(b.guest)}</h2>
+  <p class="sub" style="margin:0 0 12px">الخروج <bdi dir="ltr">${b.check_out}</bdi> الساعة <bdi dir="ltr">${cur}</bdi></p>
+  <form id="f" class="fields">
+    <div class="full quick">${[1, 2, 3].map(h => `<button type="button" class="btn" data-plus="${h}">+${h} ${h === 1 ? "ساعة" : h === 2 ? "ساعتين" : "ساعات"}</button>`).join("")}</div>
+    <label>وقت الخروج الجديد<input id="xTime" type="time" required value="${addHours(cur, 1)}"></label>
+    <label>مبلغ إضافي (${CUR})<input id="xExtra" type="number" min="0" step="any" inputmode="decimal" placeholder="0"></label>
+    <div class="calc" id="xCalc"></div>
+    <div class="mfoot full"><button class="btn primary">حفظ التمديد</button><button type="button" class="btn" data-close>إلغاء</button>
+    ${b.checkout_time ? `<button type="button" class="btn" id="xReset" style="margin-inline-start:auto">رجّع للوقت العادي</button>` : ""}</div>
+  </form>`);
+  const calc = () => { const x = +$("#xExtra").value || 0; $("#xCalc").textContent = x ? `ينضاف ${fmt(x)} ${CUR} على حساب النزيل` : "بدون مبلغ إضافي"; };
+  document.querySelectorAll("[data-plus]").forEach(btn => btn.onclick = () => { $("#xTime").value = addHours(cur, +btn.dataset.plus); });
+  $("#xExtra").oninput = calc; calc();
+  if ($("#xReset")) $("#xReset").onclick = async () => {
+    try { await write("hotel_bookings", { id: b.id, checkout_time: null }); closeModal(); toast("رجع وقت الخروج للعادي"); } catch (_) {}
+  };
+  onSave(async () => {
+    await write("hotel_bookings", { id: b.id, checkout_time: $("#xTime").value, extra: (+b.extra || 0) + (+$("#xExtra").value || 0) });
+    closeModal(); toast("انمدد الخروج للساعة " + $("#xTime").value);
+  });
+}
+
+function renderSettings(){
+  const owner = store.role === "owner";
+  if (document.activeElement !== $("#sOut")) $("#sOut").value = defaultOut();
+  $("#sOut").disabled = !owner;
+  $("#sSave").hidden = !owner;
+  $("#sNote").textContent = owner ? "" : "بس المالك يگدر يغير الإعدادات.";
+}
+$("#settingsForm").onsubmit = async e => {
+  e.preventDefault();
+  const btn = $("#sSave"); btn.disabled = true;
+  try {
+    const { error } = await sb.from("hotel_settings").update({ checkout_time: $("#sOut").value, updated_at: new Date().toISOString() }).eq("id", 1);
+    if (error) fail(error, "ما انحفظ");
+    await loadAll(); toast("انحفظت الإعدادات");
+  } catch (_) {} finally { btn.disabled = false; }
+};
+
 /* ---------- clicks ---------- */
 $("#addRoom").onclick = () => roomForm();
 $("#addBooking").onclick = $("#addBooking2").onclick = () => bookingForm();
@@ -349,6 +409,7 @@ document.addEventListener("click", async e => {
   if (!t) return;
   if (t.hasAttribute("data-close")) return closeModal();
   if (t.dataset.editroom) { e.stopPropagation(); return roomForm(roomOf(t.dataset.editroom)); }
+  if (t.dataset.extend) { e.stopPropagation(); return extendForm(findBooking(t.dataset.extend)); }
   if (t.dataset.editbooking) return bookingForm(findBooking(t.dataset.editbooking));
   if (t.dataset.editexpense) return expenseForm(store.expenses.find(x => x.id === t.dataset.editexpense));
   if (t.dataset.del) {
@@ -367,3 +428,11 @@ document.addEventListener("click", async e => {
   }
 });
 document.addEventListener("keydown", e => { if (e.key === "Enter" && e.target.dataset?.room) e.target.click(); });
+
+// keep the room cards current: a room frees up at its check-out time, and the date rolls over at midnight
+setInterval(() => {
+  if ($("#appView").hidden || !$("#overlay").hidden) return;
+  const d = iso(new Date());
+  if (d !== today) { today = d; $("#todayLbl").innerHTML = "· <bdi dir=\"ltr\">" + today + "</bdi>"; loadAll(); }
+  else render();
+}, 60000);
